@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Market Monitor</title>
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --card-bg: #181a20;
+            --text-main: #eaecef;
+            --text-muted: #848e9c;
+            --primary: #f0b90b;
+            --green: #0ecb81;
+            --red: #f6465d;
+            --border-color: #2b3139;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .title-area h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .title-area p {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .timeframes button {
+            background: #2b3139;
+            border: none;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .timeframes button.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .status-bar {
+            background: rgba(240, 185, 11, 0.1);
+            border: 1px solid rgba(240, 185, 11, 0.2);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-box {
+            background: #21262c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.8rem;
+        }
+
+        .api-box h3 {
+            margin: 0 0 6px 0;
+            font-size: 0.85rem;
+        }
+
+        .api-box p {
+            margin: 0 0 8px 0;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .api-input-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .api-input-group input {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .api-input-group button {
+            background: #2b3139;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            background: #21262c;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            min-width: 70px;
+        }
+
+        .tab.active {
+            border-color: var(--primary);
+            background: rgba(240, 185, 11, 0.05);
+        }
+
+        .tab .symbol {
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .tab .price {
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .outlook-section, .levels-section, .log-section {
+            background: #1e222a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            margin: 0 0 12px 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .outlook-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .outlook-row.neutral {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .outlook-footer {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .level-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .level-row:last-child { border: none; }
+        
+        .level-val { font-family: monospace; font-weight: bold; }
+        .res-color { color: var(--red); }
+        .sup-color { color: var(--green); }
+
+        .log-list {
+            margin: 0;
+            padding: 0 0 0 16px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .log-list li { margin-bottom: 4px; }
+
+        .footer {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="title-area">
+            <h2>Live Market Monitor</h2>
+            <p>ICE U.S. DOLLAR INDEX · <span id="main-asset-title">DXY</span></p>
+        </div>
+        <div class="controls">
+            <div class="timeframes">
+                <button class="active">1m</button>
+                <button>2m</button>
+                <button>3m</button>
+                <button>5m</button>
+                <button>15m</button>
+            </div>
+            <button class="refresh-btn" id="refresh-icon">↻ 20s</button>
+        </div>
+    </div>
+
+    <!-- Live Status Warning -->
+    <div class="status-bar" id="status-banner">
+        <span>⚠</span> Connecting...
+    </div>
+
+    <!-- API Key settings -->
+    <div class="api-box">
+        <h3>Live Data API Key (optional)</h3>
+        <p>Without a key, this app pulls data through free public proxies (Yahoo Finance), which can be slow or blocked. Add a free Twelve Data API key for faster, more reliable live prices.</p>
+        <div class="api-input-group">
+            <input type="password" id="api-key-input" placeholder="Enter Twelve Data API Key...">
+            <button id="save-api-btn">Save & use</button>
+            <button id="clear-api-btn" style="background:transparent; color:var(--text-muted)">Clear</button>
+        </div>
+    </div>
+
+    <!-- Asset Tabs -->
+    <div class="tabs">
+        <div class="tab active" data-asset="DXY">
+            <span class="symbol">DXY</span>
+            <span class="price" id="tab-DXY">--.--</span>
+        </div>
+        <div class="tab" data-asset="GOLD">
+            <span class="symbol">GOLD</span>
+            <span class="price" id="tab-GOLD">--.--</span>
+        </div>
+        <div class="tab" data-asset="EUR">
+            <span class="symbol">EUR/USD</span>
+            <span class="price" id="tab-EUR">--.--</span>
+        </div>
+        <div class="tab" data-asset="BTC">
+            <span class="symbol">BTC/USD</span>
+            <span class="price" id="tab-BTC">--.--</span>
+        </div>
+    </div>
+
+    <!-- Outlook -->
+    <div class="outlook-section">
+        <h3 class="section-title">Next 24h Outlook</h3>
+        <div class="outlook-row">
+            <span>Expected High</span>
+            <span id="out-high">----</span>
+        </div>
+        <div class="outlook-row neutral">
+            <span>Neutral (current)</span>
+            <span id="out-neutral">0.00%</span>
+        </div>
+        <div class="outlook-row">
+            <span>Expected Low</span>
+            <span id="out-low">----</span>
+        </div>
+        <div class="outlook-footer">
+            Recalculates at 3:00 AM & 11:00 PM daily.<br>
+            Statistical estimate from recent daily volatility — not a guaranteed prediction.
+        </div>
+    </div>
+
+    <!-- Resistance & Support -->
+    <div class="levels-section">
+        <h3 class="section-title">Resistance & Support</h3>
+        <div id="levels-container">
+            <div class="level-row"><span>Resistance 2</span><span class="level-val res-color" id="res-2">Calculating...</span></div>
+            <div class="level-row"><span>Resistance 1</span><span class="level-val res-color" id="res-1">Calculating...</span></div>
+            <div class="level-row"><span>Support 1</span><span class="level-val sup-color" id="sup-1">Calculating...</span></div>
+            <div class="level-row"><span>Support 2</span><span class="level-val sup-color" id="sup-2">Calculating...</span></div>
+        </div>
+    </div>
+
+    <!-- Breakout Log -->
+    <div class="log-section">
+        <h3 class="section-title">Breakout Log</h3>
+        <ul class="log-list" id="log-list">
